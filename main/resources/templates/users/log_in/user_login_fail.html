@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>User Login Fail</title>
+</head>
+<body>
+  <h1>Log in Fail</h1>
+  <div:block th:if="${error_type == 0}">
+  	<p>正しいフォーマットで入力してください。</p>
+  </div:block>
+  <div:block th:if="${error_type == 1}">
+  	<p>メールアドレスかパスワードが間違っています。</p>
+  </div:block>
+  <p><a href="/login">ログインに戻る</a></p>
+</body>
+</html>

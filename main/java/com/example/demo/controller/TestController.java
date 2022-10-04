@@ -42,6 +42,31 @@ public class TestController {
 	}
 	
 	// login signup post
+	@PostMapping("/users/login")
+	public String usersLogin(@RequestParam String email,
+							 @RequestParam String password,
+							 Model model) {
+		// TODO CSRF
+		Pattern email_pattern = Pattern.compile("^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,6}$", Pattern.CASE_INSENSITIVE);
+		Matcher email_matcher = email_pattern.matcher(email);
+		boolean is_find = email_matcher.find();
+		int password_length = password.length();
+		if (is_find == false || password_length < 8) {
+			model.addAttribute("error_type", 0);
+			return "users/log_in/user_login_fail";
+		}
+		String hashed_password = DigestUtils.md5Hex(password);
+		String check_user_sql = "SELECT * FROM test_table WHERE email='" + email +
+								"' AND hashed_password='" + hashed_password + "';" ;
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_sql);
+		System.out.println(check_user_sql);
+		System.out.println(list);
+		if (list.size() == 0) {
+			model.addAttribute("error_type", 1);
+			return "users/log_in/user_login_fail";
+		}
+		return "users/log_in/user_login_success";
+	}
 	@PostMapping("/users/signup")
 	public String usersSignup(@RequestParam String email,
 							  @RequestParam String password,
