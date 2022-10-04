@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>User Signup Fail</title>
+</head>
+<body>
+  <h1>Sign Up Fail</h1>
+  <div:block th:if="${error_type == 0}">
+  	<p>正しいフォーマットで入力してください。</p>
+  </div:block>
+  <div:block th:if="${error_type == 1}">
+	  <p>ユーザーはすでに存在しています。</p>
+	  <hr>
+	  <div th:each="user : ${checked_user}">
+	  	<div th:text="${user.id}"></div>
+	  	<div th:text="${user.email}"></div>
+	  </div>
+  </div:block>
+</body>
+</html>

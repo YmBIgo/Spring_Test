@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Login</title>
+</head>
+<body>
+  <h1>Login</h1>
+  <hr>
+  <form method="post" action="/users/login">
+  	<p>
+  		<span>email</span>
+  		<input type="text" name="email">
+  	</p>
+  	<p>
+  		<span>password</span>
+  		<input type="text" name="password">
+  	</p>
+  	<input type="submit" value="送信する">
+  </form>
+</body>
+</html>

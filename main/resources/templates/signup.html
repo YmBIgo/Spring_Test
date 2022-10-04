@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Sign Up</title>
+</head>
+<body>
+  <h1>Sign Up</h1>
+  <form method="post" action="/users/signup">
+  	<p>
+  		<span>email</span>
+  		<input type="text" name="email">
+  	</p>
+  	<p>
+  		<span>password</span>
+  		<input type="password" name="password">
+  	</p>
+  	<input type="submit" value="送信する">
+  </form>
+</body>
+</html>
