@@ -16,6 +16,7 @@
   		<span>password</span>
   		<input type="text" name="password">
   	</p>
+  	<input type="hidden" name="csrf_key" th:value="${csrf_key}">
   	<input type="submit" value="送信する">
   </form>
 </body>

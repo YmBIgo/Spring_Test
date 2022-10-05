@@ -6,6 +6,7 @@
 </head>
 <body>
   <h1>Sign Up</h1>
+  <hr>
   <form method="post" action="/users/signup">
   	<p>
   		<span>email</span>
@@ -15,6 +16,7 @@
   		<span>password</span>
   		<input type="password" name="password">
   	</p>
+  	<input type="hidden" name="csrf_key" th:value="${csrf_key}">
   	<input type="submit" value="送信する">
   </form>
 </body>

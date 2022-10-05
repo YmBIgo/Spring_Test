@@ -12,6 +12,9 @@
   <div:block th:if="${error_type == 1}">
   	<p>メールアドレスかパスワードが間違っています。</p>
   </div:block>
+  <div:block th:if="${error_type == 2}">
+  	<p>不正なリクエストです。</p>
+  </div:block>
   <p><a href="/login">ログインに戻る</a></p>
 </body>
 </html>

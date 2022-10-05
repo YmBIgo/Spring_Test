@@ -11,11 +11,9 @@
   </div:block>
   <div:block th:if="${error_type == 1}">
 	  <p>ユーザーはすでに存在しています。</p>
-	  <hr>
-	  <div th:each="user : ${checked_user}">
-	  	<div th:text="${user.id}"></div>
-	  	<div th:text="${user.email}"></div>
-	  </div>
+  </div:block>
+  <div:block th:if="${error_type == 2}">
+  	<p>不正なリクエストです。</p>
   </div:block>
 </body>
 </html>
