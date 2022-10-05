@@ -10,11 +10,15 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.codec.digest.DigestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,13 +41,25 @@ public class TestController {
 	
 	// login signup get
 	@GetMapping("/login")
-	public String login(Model model) {
+	public String login(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+						Model model) {
+		// cookie check
+		if (cookie_value.equals("")) {
+			return "index_redirect";
+		}
+		// csrf
 		String csrf_key = generate_csrf();
 		model.addAttribute("csrf_key", csrf_key);
 		return "login";
 	}
 	@GetMapping("/signup")
-	public String signup(Model model) {
+	public String signup(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+						 Model model) {
+		// cookie check
+		if (cookie_value.equals("")) {
+			return "index_redirect";
+		}
+		// csrf
 		String csrf_key = generate_csrf();
 		model.addAttribute("csrf_key", csrf_key);
 		return "signup";
@@ -51,10 +67,16 @@ public class TestController {
 	
 	// login signup post
 	@PostMapping("/users/login")
-	public String usersLogin(@RequestParam String email,
+	public String usersLogin(@CookieValue("id") String cookie_value,
+							 @RequestParam String email,
 							 @RequestParam String password,
 							 @RequestParam String csrf_key,
+							 HttpServletResponse response,
 							 Model model) {
+		// cookie check
+		if (cookie_value.equals("")) {
+			return "index_redirect";
+		}
 		// TODO CSRF
 		boolean csrf_result = check_csrf(csrf_key);
 		if (csrf_result == false) {
@@ -79,13 +101,27 @@ public class TestController {
 			model.addAttribute("error_type", 1);
 			return "users/log_in/user_login_fail";
 		}
+
+		// cookie
+		String random_cookie_value = generate_cookie();
+		Cookie cookie = new Cookie("id", random_cookie_value);
+		cookie.setMaxAge(365 * 24 * 60 * 60);
+		cookie.setPath("/");
+		response.addCookie(cookie);
+		//
 		return "users/log_in/user_login_success";
 	}
 	@PostMapping("/users/signup")
-	public String usersSignup(@RequestParam String email,
+	public String usersSignup(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+							  @RequestParam String email,
 							  @RequestParam String password,
 							  @RequestParam String csrf_key,
+							  HttpServletResponse response,
 							  Model model) {
+		// cookie check
+		if (cookie_value.equals("")) {
+			return "index_redirect";
+		}
 		// TODO CSRF
 		boolean csrf_result = check_csrf(csrf_key);
 		if (csrf_result == false) {
@@ -111,10 +147,18 @@ public class TestController {
 		}
 		String masked_password = String.join("", Collections.nCopies(password_length, "*"));
 		String hashed_new_password = DigestUtils.md5Hex(password);
-//		String insert_new_user_sql = "INSERT INTO test_table(email, password) VALUES(" +
-//				email + ", " + hashed_new_password  +")";
-//		jdbcTemplate.update(insert_new_user_sql);
-		//
+		
+		// String insert_new_user_sql = "INSERT INTO test_table(email, password) VALUES(" +
+		// email + ", " + hashed_new_password  +")";
+		// jdbcTemplate.update(insert_new_user_sql);
+
+		// cookie
+		String random_cookie_value = generate_cookie();
+		Cookie cookie = new Cookie("id", random_cookie_value);
+		cookie.setMaxAge(365 * 24 * 60 * 60);
+		cookie.setPath("/");
+		response.addCookie(cookie);
+		
 		model.addAttribute("password", masked_password);
 		model.addAttribute("email", email);
 		return "users/sign_up/user_signup_success";
@@ -130,6 +174,15 @@ public class TestController {
 		String csrf_sql = "INSERT INTO csrf_checker(hashed_key) " +
 						"VALUES('" + hashed_key + "');";
 		jdbcTemplate.update(csrf_sql);
+		return hashed_key;
+	}
+	
+	public String generate_cookie() {
+		// generate random value
+		Random random = new Random();
+		int random_number = random.nextInt(1000000000);
+		String hashed_key_before = String.valueOf(random_number);
+		String hashed_key = DigestUtils.sha256Hex(hashed_key_before);
 		return hashed_key;
 	}
 	
@@ -151,7 +204,6 @@ public class TestController {
 		Date current_time = new Date(System.currentTimeMillis());
 		long diffMills = current_time.getTime() - csrf_created_at.getTime();
 		int diffSeconds = (int)diffMills/1000;
-		// System.out.println(diffMills);
 		System.out.println(diffSeconds);
 		if (diffSeconds < 86400) {
 			return true;
