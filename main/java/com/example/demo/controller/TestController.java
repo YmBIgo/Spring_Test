@@ -32,10 +32,16 @@ public class TestController {
 	private JdbcTemplate jdbcTemplate;
 	
 	@GetMapping("/index")
-	public String index(Model model) {
-		String sql = "SELECT * FROM users";
-		List<Map<String, Object>> list = jdbcTemplate.queryForList(sql);
-		model.addAttribute("testList", list);
+	public String index(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+						@CookieValue(name = "email", required = false, defaultValue = "") String email,
+						Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		System.out.println(current_user_id);
+		if (current_user_id == "") {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
 		return "index";
 	}
 	
@@ -111,6 +117,10 @@ public class TestController {
 		cookie.setMaxAge(365 * 24 * 60 * 60);
 		cookie.setPath("/");
 		response.addCookie(cookie);
+		Cookie email_cookie = new Cookie("email", email);
+		email_cookie.setMaxAge(365 * 24 * 60 * 60);
+		email_cookie.setPath("/");
+		response.addCookie(email_cookie);
 		//
 		return "users/log_in/user_login_success";
 	}
@@ -136,7 +146,6 @@ public class TestController {
 		Matcher email_matcher = email_pattern.matcher(email);
 		boolean is_find = email_matcher.find();
 		int password_length = password.length();
-		System.out.println(email + " " + is_find);
 		if (is_find == false || password_length < 8) {
 			model.addAttribute("error_type", 0);
 			return "users/sign_up/user_signup_fail";
@@ -164,13 +173,28 @@ public class TestController {
 		cookie.setMaxAge(365 * 24 * 60 * 60);
 		cookie.setPath("/");
 		response.addCookie(cookie);
+		Cookie email_cookie = new Cookie("email", email);
+		email_cookie.setMaxAge(365 * 24 * 60 * 60);
+		email_cookie.setPath("/");
+		response.addCookie(email_cookie);
 		
 		model.addAttribute("password", masked_password);
 		model.addAttribute("email", email);
 		return "users/sign_up/user_signup_success";
 	}
 	
-	public String generate_csrf() {
+	//
+	private String current_user_id(String cookie, String email) {
+		String check_user_cookie_sql = "SELECT * FROM users WHERE email = ? AND cookie_value = ?;";
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_cookie_sql, email, cookie);
+		if (list.size() != 0) {
+			String current_user_id = list.get(0).get("id").toString();
+			return current_user_id;
+		}
+		return "";
+	}
+	
+	private String generate_csrf() {
 		// generate random value
 		Random random = new Random();
 		int random_number = random.nextInt(10000000);
@@ -183,7 +207,7 @@ public class TestController {
 		return hashed_key;
 	}
 	
-	public String generate_cookie() {
+	private String generate_cookie() {
 		// generate random value
 		Random random = new Random();
 		int random_number = random.nextInt(1000000000);
@@ -192,7 +216,7 @@ public class TestController {
 		return hashed_key;
 	}
 	
-	public boolean check_csrf(String csrf_key) {
+	private boolean check_csrf(String csrf_key) {
 		// String csrf_check_sql = "SELECT created_at FROM csrf_checker WHERE hashed_key='" +
 		//						csrf_key + "' " +
 		//						"ORDER BY created_at DESC";
@@ -211,7 +235,7 @@ public class TestController {
 		Date current_time = new Date(System.currentTimeMillis());
 		long diffMills = current_time.getTime() - csrf_created_at.getTime();
 		int diffSeconds = (int)diffMills/1000;
-		System.out.println(diffSeconds);
+//		System.out.println(diffSeconds);
 		if (diffSeconds < 86400) {
 			return true;
 		}
