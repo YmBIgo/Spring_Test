@@ -44,7 +44,7 @@ public class TestController {
 	public String login(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
 						Model model) {
 		// cookie check
-		if (cookie_value.equals("")) {
+		if (!cookie_value.equals("")) {
 			return "index_redirect";
 		}
 		// csrf
@@ -56,7 +56,7 @@ public class TestController {
 	public String signup(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
 						 Model model) {
 		// cookie check
-		if (cookie_value.equals("")) {
+		if (!cookie_value.equals("")) {
 			return "index_redirect";
 		}
 		// csrf
@@ -67,14 +67,14 @@ public class TestController {
 	
 	// login signup post
 	@PostMapping("/users/login")
-	public String usersLogin(@CookieValue("id") String cookie_value,
+	public String usersLogin(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
 							 @RequestParam String email,
 							 @RequestParam String password,
 							 @RequestParam String csrf_key,
 							 HttpServletResponse response,
 							 Model model) {
 		// cookie check
-		if (cookie_value.equals("")) {
+		if (!cookie_value.equals("")) {
 			return "index_redirect";
 		}
 		// TODO CSRF
@@ -93,9 +93,10 @@ public class TestController {
 			return "users/log_in/user_login_fail";
 		}
 		String hashed_password = DigestUtils.md5Hex(password);
-		String check_user_sql = "SELECT * FROM users WHERE email='" + email +
-								"' AND hashed_password='" + hashed_password + "';" ;
-		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_sql);
+		// String check_user_sql = "SELECT * FROM users WHERE email='" + email +
+		//						"' AND hashed_password='" + hashed_password + "';" ;
+		String check_user_sql = "SELECT * FROM users WHERE email= ? AND hashed_password = ?;" ;
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_sql, email, hashed_password);
 		System.out.println(list);
 		if (list.size() == 0) {
 			model.addAttribute("error_type", 1);
@@ -104,6 +105,8 @@ public class TestController {
 
 		// cookie
 		String random_cookie_value = generate_cookie();
+		String update_user_sql = "UPDATE users SET cookie_value = ? WHERE email = ? AND hashed_password = ?;";
+		jdbcTemplate.update(update_user_sql, random_cookie_value, email, hashed_password);
 		Cookie cookie = new Cookie("id", random_cookie_value);
 		cookie.setMaxAge(365 * 24 * 60 * 60);
 		cookie.setPath("/");
@@ -119,7 +122,7 @@ public class TestController {
 							  HttpServletResponse response,
 							  Model model) {
 		// cookie check
-		if (cookie_value.equals("")) {
+		if (!cookie_value.equals("")) {
 			return "index_redirect";
 		}
 		// TODO CSRF
@@ -139,8 +142,9 @@ public class TestController {
 			return "users/sign_up/user_signup_fail";
 		}
 		//
-		String check_user_sql = "SELECT * FROM users WHERE email='" + email + "'";
-		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_sql);
+		// String check_user_sql = "SELECT * FROM users WHERE email='" + email + "'";
+		String check_user_sql = "SELECT * FROM users WHERE email = ?;";
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_sql, email);
 		if (list.size() >= 1) {
 			model.addAttribute("error_type", 1);
 			return "users/sign_up/user_signup_fail";
@@ -154,6 +158,8 @@ public class TestController {
 
 		// cookie
 		String random_cookie_value = generate_cookie();
+		String update_user_sql = "UPDATE users SET cookie_value = ? WHERE email = ? AND hashed_password = ?;";
+		jdbcTemplate.update(update_user_sql, random_cookie_value, email, hashed_new_password);
 		Cookie cookie = new Cookie("id", random_cookie_value);
 		cookie.setMaxAge(365 * 24 * 60 * 60);
 		cookie.setPath("/");
@@ -187,10 +193,11 @@ public class TestController {
 	}
 	
 	public boolean check_csrf(String csrf_key) {
-		String csrf_check_sql = "SELECT created_at FROM csrf_checker WHERE hashed_key='" +
-								csrf_key + "' " +
-								"ORDER BY created_at DESC";
-		List<Map<String, Object>> list = jdbcTemplate.queryForList(csrf_check_sql);
+		// String csrf_check_sql = "SELECT created_at FROM csrf_checker WHERE hashed_key='" +
+		//						csrf_key + "' " +
+		//						"ORDER BY created_at DESC";
+		String csrf_check_sql = "SELECT created_at FROM csrf_checker WHERE hashed_key = ? ORDER BY created_at DESC;";
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(csrf_check_sql, csrf_key);
 		if (list.size() == 0) return false;
 		String csrf_created_at_str = list.get(0).get("created_at").toString();
 		SimpleDateFormat csrf_timestamp_format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");

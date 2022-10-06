@@ -7,6 +7,7 @@ CREATE TABLE users
   name VARCHAR(100),
   old INT,
   hashed_password VARCHAR(256),
+  cookie_value VARCHAR(128),
   email VARCHAR(512),
   PRIMARY KEY(id)
 );
