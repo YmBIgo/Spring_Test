@@ -5,6 +5,26 @@
 	<title>Top Page</title>
 </head>
 <body>
-	<h1>Hello This is Top Page.</h1>
+	<h1>Hello This is the Top Page.</h1>
+	<hr/>
+	<form action="/tweets/create" method="post">
+		<input type="text" name="tweet" style="width:400px; height:100px;" placeholder="ツイートを入力してください。"/>
+		<input type="hidden" name="csrf_key" th:value="${csrf_key}">
+		<br/>
+		<input type="submit" value="ツイートする">
+	</form>
+	<p>Go to <a href="/users">User Profiles</a></p>
+	<hr/>
+	<div th:each="tweet : ${tweets}">
+		<div>
+			<h6 th:utext="'ツイートID : ' + ${tweet.id} + ' : <a href=\'/users/' + ${tweet.user_id} + '\'>' + ${tweet.user_name} + '</a>さんのツイート'"></h6>
+			<p th:text="${tweet.text}">
+			</p>
+			<h6>
+				<small th:text="${tweet.created_at}"></small>
+			</h6>
+			<hr/>
+		</div>
+	</div>
 </body>
 </html>

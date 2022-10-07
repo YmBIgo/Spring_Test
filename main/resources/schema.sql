@@ -1,5 +1,6 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS csrf_checker;
+DROP TABLE IF EXISTS tweets;
 
 CREATE TABLE users
 (
@@ -9,6 +10,15 @@ CREATE TABLE users
   hashed_password VARCHAR(256),
   cookie_value VARCHAR(128),
   email VARCHAR(512),
+  PRIMARY KEY(id)
+);
+
+CREATE TABLE tweets
+(
+  id INT NOT NULL AUTO_INCREMENT,
+  text VARCHAR(256),
+  user_id INTEGER,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY(id)
 );
 

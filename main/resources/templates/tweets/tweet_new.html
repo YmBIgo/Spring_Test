@@ -7,8 +7,13 @@
 <body>
 	<h1>Tweet New Page</h1>
 	<form action="/tweets/create" method="post">
-		<input type="text" name="tweet" style="width:200px; height:100px;"/>
+		<input type="text" name="tweet" style="width:400px; height:100px;" placeholder="ツイートを入力してください。"/>
+		<input type="hidden" name="csrf_key" th:value="${csrf_key}">
+		<br/>
 		<input type="submit" value="ツイートする">
 	</form>
+	<p>
+		<a href="/index">トップに戻る</a>
+	</p>
 </body>
 </html>

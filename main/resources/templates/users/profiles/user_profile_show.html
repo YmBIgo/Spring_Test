@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title th:text="${user.name} + '\'s User Profile'"></title>
+</head>
+<body>
+	<p>Back to <a href="/index">Top page</a></p>
+	<h1 th:text="${user.name} + '\'s User Profile'"></h1>
+	<p th:text="'Old ' + ${user.old}"></p>
+	<hr/>
+	<th:block th:if="${tweets.size() == 0}">
+		<p>ツイートは存在しません。</p>
+	</th:block>
+	<th:block th:if="${tweets.size() != 0}">
+		<div th:each="tweet : ${tweets}">
+			<h6 th:utext="'ツイートID : ' + ${tweet.id} + ' : <a href=\'/users/' + ${tweet.user_id} + '\'>' + ${user.name} + '</a>さんのツイート'"></h6>
+			<p th:text="${tweet.text}"></p>
+			<h6>
+				<small th:text="${tweet.created_at}"></small>
+			</h6>
+			<hr/>
+		</div>
+	</th:block>
+</body>
+</html>

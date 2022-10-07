@@ -2,6 +2,7 @@ package com.example.demo.controller;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,17 +33,30 @@ public class TestController {
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 	
+	// User
 	@GetMapping("/index")
 	public String index(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
 						@CookieValue(name = "email", required = false, defaultValue = "") String email,
 						Model model) {
 		String current_user_id = current_user_id(cookie_value, email);
-		System.out.println(current_user_id);
 		if (current_user_id == "") {
 			String csrf_key = generate_csrf();
 			model.addAttribute("csrf_key", csrf_key);
 			return "login";
 		}
+		List<Map<String, Object>> list = get_timeline_tweets();
+		List<Map<String, Object>> list_with_user_id = new ArrayList();
+		for (int i = 0; i < list.size(); i++) {
+			Map<String, Object> current_list = list.get(i);
+			String current_tweet_user_id_str = current_list.get("user_id").toString();
+			String get_user_name_sql = "SELECT name FROM users WHERE id = ?";
+			Map<String, Object> user_result = jdbcTemplate.queryForMap(get_user_name_sql, current_tweet_user_id_str);
+			current_list.put("user_name", user_result.get("name"));
+			list_with_user_id.add(current_list);
+		}
+		model.addAttribute("tweets", list_with_user_id);
+		String csrf_key = generate_csrf();
+		model.addAttribute("csrf_key", csrf_key);
 		return "index";
 	}
 	
@@ -183,11 +198,79 @@ public class TestController {
 		return "users/sign_up/user_signup_success";
 	}
 	
+	// Tweets
+	@GetMapping("/tweets/new")
+	public String tweet_new(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+							@CookieValue(name = "email", required = false, defaultValue = "") String email,
+							Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id == "") {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		String csrf_key = generate_csrf();
+		model.addAttribute("csrf_key", csrf_key);
+		return "tweets/tweet_new";
+	}
+	
+	@PostMapping("/tweets/create")
+	public String tweet_create(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+							   @CookieValue(name = "email", required = false, defaultValue = "") String email,
+							   @RequestParam String tweet,
+							   Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id == "") {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		String create_tweet_sql = "INSERT INTO tweets(text, user_id) VALUES(?, ?)";
+		jdbcTemplate.update(create_tweet_sql, tweet, current_user_id);
+		return "index_redirect";
+	}
+	
+	// User Profile
+	@GetMapping("/users/{userId}")
+	public String user_profile_show(@PathVariable String userId,
+									Model model) {
+		if (userId == "") {
+			return "user_profile_notfound";
+		}
+		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
+		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
+		if (user_list.size() == 0) {
+			return "user_profile_notfound";
+		}
+		String find_tweets_sql = "SELECT * FROM tweets WHERE user_id = ? ORDER BY created_at DESC;";
+		List<Map<String, Object>> tweets_list = jdbcTemplate.queryForList(find_tweets_sql, userId);
+		model.addAttribute("user", user_list.get(0));
+		model.addAttribute("tweets", tweets_list);
+		return "users/profiles/user_profile_show";
+	}
+	
+	@GetMapping("/users")
+	public String user_profile_index(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+			   						@CookieValue(name = "email", required = false, defaultValue = "") String email,
+									Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id == "") {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		String get_users_sql = "SELECT * FROM users;";
+		List<Map<String, Object>> users_list = jdbcTemplate.queryForList(get_users_sql);
+		model.addAttribute("users", users_list);
+		model.addAttribute("current_user_id", current_user_id);
+		return "users/profiles/user_profile_index";
+	}
+	
 	//
 	private String current_user_id(String cookie, String email) {
 		String check_user_cookie_sql = "SELECT * FROM users WHERE email = ? AND cookie_value = ?;";
 		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_cookie_sql, email, cookie);
-		if (list.size() != 0) {
+		if (list.size() > 0) {
 			String current_user_id = list.get(0).get("id").toString();
 			return current_user_id;
 		}
@@ -240,5 +323,14 @@ public class TestController {
 			return true;
 		}
 		return false;
+	}
+	
+	//
+	
+	private List<Map<String, Object>> get_timeline_tweets() {
+		// TODO get tweet whose user is following
+		String get_timeline_tweets_sql = "SELECT * FROM tweets ORDER BY created_at DESC;";
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(get_timeline_tweets_sql);
+		return list;
 	}
 }

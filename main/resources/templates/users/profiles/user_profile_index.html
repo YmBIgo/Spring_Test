@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>User Profile Index</title>
+</head>
+<body>
+	<h1>User Profiles</h1>
+	<p>Back to <a href="/index">Top page</a></p>
+	<hr/>
+	<div th:each="user : ${users}">
+		<div>
+			<h4 th:utext="'<a href=\'/users/' + ${user.id} + '\'>' + ${user.name} + '</a>'"></h4>
+			<p th:text="${user.old} + ' years old.'"></p>
+			<hr/>
+		</div>
+	</div>
+</body>
+</html>
