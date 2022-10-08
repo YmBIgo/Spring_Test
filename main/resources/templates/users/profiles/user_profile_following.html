@@ -5,7 +5,8 @@
 	<title>User Followings</title>
 </head>
 <body>
-	<h1>User Followings</h1>
+	<p th:utext="'Back to <a href=\'/users/' + ${current_user.get('id')} + '\'>User Page</a>'"></p>
+	<h1 th:text="${current_user.get('name')} + '\'s Followers'"></h1>
 	<hr/>
 	<div th:each="user : ${following_user}">
 		<p th:utext="'<a href=\'/users/' + ${user.id} + '\'>' + ${user.id} + ' : ' + ${user.name} + '</a>'"></p>

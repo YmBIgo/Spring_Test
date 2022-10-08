@@ -7,4 +7,4 @@ INSERT INTO tweets(text, user_id, is_reply)
 VALUES  ('Test Tweets', 1, 0);
 
 INSERT INTO user_follow_relationships(following_user_id, followed_user_id)
-VALUES (1, 2);
+VALUES (1, 2), (2, 1), (3, 1);

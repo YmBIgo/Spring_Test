@@ -282,17 +282,19 @@ public class TestController {
 		if (userId == "") {
 			return "/users/profiles/user_profile_notfound";
 		}
-		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
+		String find_user_sql = "SELECT id, name, email, old FROM users WHERE id = ?;";
 		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
 		if (user_list.size() == 0) {
 			return "/users/profiles/user_profile_notfound";
 		}
+		model.addAttribute("current_user", user_list.get(0));
+		//
 		String following_user_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ?;";
 		List<Map<String, Object>> following_user = jdbcTemplate.queryForList(following_user_sql, userId);
 		List<Map<String, Object>> following_user_array = new ArrayList(); 
 		for (int i = 0; i < following_user.size(); i++) {
 			String get_following_user_info_sql = "SELECT name, old, id, email FROM users WHERE id = ?;";
-			Map<String, Object> following_user_info = jdbcTemplate.queryForMap(get_following_user_info_sql, following_user.get(i).get("id"));
+			Map<String, Object> following_user_info = jdbcTemplate.queryForMap(get_following_user_info_sql, following_user.get(i).get("followed_user_id"));
 			following_user_array.add(following_user_info);
 		}
 		//
@@ -306,15 +308,34 @@ public class TestController {
 		if (userId == "") {
 			return "/users/profiles/user_profile_notfound";
 		}
-		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
+		String find_user_sql = "SELECT id, name, email, old FROM users WHERE id = ?;";
 		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
 		if (user_list.size() == 0) {
 			return "/users/profiles/user_profile_notfound";
 		}
+		model.addAttribute("current_user", user_list.get(0));
+		//
 		String followed_user_sql  = "SELECT * FROM user_follow_relationships WHERE followed_user_id = ?;";
 		List<Map<String, Object>> followed_user  = jdbcTemplate.queryForList(followed_user_sql, userId);
+		if (followed_user.size() == 0) {
+			return "/users/profiles/user_profile_follower";
+		}
+		String get_users_info_sql = "SELECT name, id, old, email FROM users WHERE id IN(";
+		String get_user_info_middle_sql = "";
+		for (int i = 0; i < followed_user.size(); i++) {
+			if (followed_user.size() == i+1) {
+				get_user_info_middle_sql += followed_user.get(i).get("following_user_id");
+			} else {
+				get_user_info_middle_sql += followed_user.get(i).get("following_user_id") + ", ";
+			}
+		}
+		get_users_info_sql += get_user_info_middle_sql;
+		get_users_info_sql += ");";
+		System.out.println(get_users_info_sql);
+		List<Map<String, Object>> user_info = jdbcTemplate.queryForList(get_users_info_sql);
+		System.out.println(user_info);
 		//
-		model.addAttribute("followed_user", followed_user);
+		model.addAttribute("followed_user", user_info);
 		return "/users/profiles/user_profile_follower";
 	}
 	
