@@ -7,7 +7,9 @@
 <body>
 	<p>Back to <a href="/index">Top page</a></p>
 	<h1 th:text="${user.name} + '\'s User Profile'"></h1>
-	<p th:text="'Old ' + ${user.old}"></p>
+	<hr/>
+	<p th:utext="'<a href=\'/users/' + ${user.id} + '/followings\'>'+ ${following} + ' Following</a>　<a href=\'/users/' + ${user.id} + '/followers\'>' + ${followed} + ' Followers</a>'"></p>
+	<p th:text="${user.old} + ' Years Old'"></p>
 	<hr/>
 	<th:block th:if="${tweets.size() == 0}">
 		<p>ツイートは存在しません。</p>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>User Followings</title>
+</head>
+<body>
+	<h1>User Followings</h1>
+	<hr/>
+	<div th:each="user : ${following_user}">
+		<p th:utext="'<a href=\'/users/' + ${user.id} + '\'>' + ${user.id} + ' : ' + ${user.name} + '</a>'"></p>
+		<hr/>
+	</div>
+</body>
+</html>

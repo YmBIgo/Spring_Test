@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS csrf_checker;
 DROP TABLE IF EXISTS tweets;
+DROP TABLE user_follow_relationships;
 
 CREATE TABLE users
 (
@@ -18,6 +19,16 @@ CREATE TABLE tweets
   id INT NOT NULL AUTO_INCREMENT,
   text VARCHAR(256),
   user_id INTEGER,
+  is_reply INTEGER DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY(id)
+);
+
+CREATE TABLE user_follow_relationships
+(
+  id INT NOT NULL AUTO_INCREMENT,
+  following_user_id INTEGER,
+  followed_user_id INTEGER,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY(id)
 );

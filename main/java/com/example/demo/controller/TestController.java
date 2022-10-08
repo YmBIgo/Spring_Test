@@ -225,7 +225,7 @@ public class TestController {
 			model.addAttribute("csrf_key", csrf_key);
 			return "login";
 		}
-		String create_tweet_sql = "INSERT INTO tweets(text, user_id) VALUES(?, ?)";
+		String create_tweet_sql = "INSERT INTO tweets(text, user_id, is_reply) VALUES(?, ?, 0)";
 		jdbcTemplate.update(create_tweet_sql, tweet, current_user_id);
 		return "index_redirect";
 	}
@@ -235,17 +235,27 @@ public class TestController {
 	public String user_profile_show(@PathVariable String userId,
 									Model model) {
 		if (userId == "") {
-			return "user_profile_notfound";
+			return "users/profiles/user_profile_notfound";
 		}
 		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
 		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
 		if (user_list.size() == 0) {
-			return "user_profile_notfound";
+			return "/users/profiles/user_profile_notfound";
 		}
 		String find_tweets_sql = "SELECT * FROM tweets WHERE user_id = ? ORDER BY created_at DESC;";
 		List<Map<String, Object>> tweets_list = jdbcTemplate.queryForList(find_tweets_sql, userId);
+		//
+		String following_user_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ?;";
+		String followed_user_sql  = "SELECT * FROM user_follow_relationships WHERE followed_user_id = ?;";
+		List<Map<String, Object>> following_user = jdbcTemplate.queryForList(following_user_sql, userId);
+		List<Map<String, Object>> followed_user  = jdbcTemplate.queryForList(followed_user_sql, userId);
+		int following_user_length = following_user.size();
+		int followed_user_length  = followed_user.size();
+		//
 		model.addAttribute("user", user_list.get(0));
 		model.addAttribute("tweets", tweets_list);
+		model.addAttribute("following", following_user_length);
+		model.addAttribute("followed", followed_user_length);
 		return "users/profiles/user_profile_show";
 	}
 	
@@ -264,6 +274,48 @@ public class TestController {
 		model.addAttribute("users", users_list);
 		model.addAttribute("current_user_id", current_user_id);
 		return "users/profiles/user_profile_index";
+	}
+	
+	@GetMapping("/users/{userId}/followings")
+	public String user_profile_following(@PathVariable String userId,
+										 Model model) {
+		if (userId == "") {
+			return "/users/profiles/user_profile_notfound";
+		}
+		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
+		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
+		if (user_list.size() == 0) {
+			return "/users/profiles/user_profile_notfound";
+		}
+		String following_user_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ?;";
+		List<Map<String, Object>> following_user = jdbcTemplate.queryForList(following_user_sql, userId);
+		List<Map<String, Object>> following_user_array = new ArrayList(); 
+		for (int i = 0; i < following_user.size(); i++) {
+			String get_following_user_info_sql = "SELECT name, old, id, email FROM users WHERE id = ?;";
+			Map<String, Object> following_user_info = jdbcTemplate.queryForMap(get_following_user_info_sql, following_user.get(i).get("id"));
+			following_user_array.add(following_user_info);
+		}
+		//
+		model.addAttribute("following_user", following_user_array);
+		return "/users/profiles/user_profile_following";
+	}
+	
+	@GetMapping("/users/{userId}/followers")
+	public String user_profile_follower(@PathVariable String userId,
+										Model model) {
+		if (userId == "") {
+			return "/users/profiles/user_profile_notfound";
+		}
+		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
+		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
+		if (user_list.size() == 0) {
+			return "/users/profiles/user_profile_notfound";
+		}
+		String followed_user_sql  = "SELECT * FROM user_follow_relationships WHERE followed_user_id = ?;";
+		List<Map<String, Object>> followed_user  = jdbcTemplate.queryForList(followed_user_sql, userId);
+		//
+		model.addAttribute("followed_user", followed_user);
+		return "/users/profiles/user_profile_follower";
 	}
 	
 	//

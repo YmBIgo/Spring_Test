@@ -2,5 +2,9 @@ INSERT INTO users(name, old, hashed_password, email)
 VALUES 	('Taro', 30, '329435e5e66be809a656af105f42401e', 'hoge@hoge.com'),
 		('Jiro', 25, '329435e5e66be809a656af105f42401e', 'hoge@hogehoge.com'),
 		('Saburo', 22, '329435e5e66be809a656af105f42401e', 'hogehoge@hoge.com');
-INSERT INTO tweets(text, user_id)
-VALUES  ('Test Tweets', 1);
+
+INSERT INTO tweets(text, user_id, is_reply)
+VALUES  ('Test Tweets', 1, 0);
+
+INSERT INTO user_follow_relationships(following_user_id, followed_user_id)
+VALUES (1, 2);
