@@ -404,6 +404,37 @@ public class TestController {
 		jdbcTemplate.update(delete_user_relationship_sql, current_user_id, userId);
 		return "users/profiles/user_profile_redirect";
 	}
+	@GetMapping("/users/profile/edit")
+	public String user_profile_edit(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+				  					@CookieValue(name = "email", required = false, defaultValue = "") String email, 
+									Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id.equals("")) {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		List<Map<String, Object>> user_list = current_user_object(cookie_value, email);
+		model.addAttribute("user_info", user_list.get(0));
+		return "users/profiles/user_profile_edit";
+	}
+	@PostMapping("/users/profile/update")
+	public String user_profile_update(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+									  @CookieValue(name = "email", required = false, defaultValue = "") String email,
+									  @RequestParam String old,
+									  @RequestParam String name,
+									  Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id.equals("")) {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		String update_user_info_sql = "UPDATE users SET name = ?, old = ? WHERE id = ?";
+		jdbcTemplate.update(update_user_info_sql, name, old, current_user_id);
+		model.addAttribute("userId", "http://localhost:8080/users/" + current_user_id);
+		return "users/profiles/user_profile_redirect";
+	}
 	
 	//
 	private String current_user_id(String cookie, String email) {
@@ -414,6 +445,12 @@ public class TestController {
 			return current_user_id;
 		}
 		return "";
+	}
+	
+	private List<Map<String, Object>> current_user_object(String cookie, String email) {
+		String check_user_cookie_sql = "SELECT * FROM users WHERE email = ? AND cookie_value = ?;";
+		List<Map<String, Object>> list = jdbcTemplate.queryForList(check_user_cookie_sql, email, cookie);
+		return list;
 	}
 	
 	private String generate_csrf() {

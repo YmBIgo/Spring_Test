@@ -10,7 +10,7 @@
 	<hr/>
 	<p th:utext="'<a href=\'/users/' + ${user.id} + '/followings\'>'+ ${following} + ' Following</a>　<a href=\'/users/' + ${user.id} + '/followers\'>' + ${followed} + ' Followers</a>'"></p>
 	<th:block th:if="${follow_or_edit_button == 0}">
-		<p th:utext="'<a href=\'/users/' + ${user.id} + '/edit\'>ユーザーを編集する</a>' "></p>
+		<p th:utext="'<a href=\'/users/profile/edit\'>ユーザーを編集する</a>' "></p>
 	</th:block>
 	<th:block th:if="${follow_or_edit_button == 1}">
 		<p th:utext="'<a href=\'/users/' + ${user.id} + '/follow\'>フォロー</a>'"></p>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>User Profile Edit</title>
+</head>
+<body>
+	<h1>User Profiles</h1>
+	<p>Back to <a th:href="'/users/' + ${user_info.id}">User Info</a></p>
+	<hr/>
+	<form method="POST" action="/users/profile/update">
+		<label for="name">名前</label>
+		<br/>
+		<input type="text" name="name" th:value="${user_info.name}" />
+		<br/>
+		<label for="old">年齢</label>
+		<br/>
+		<input type="text" name="old" th:value="${user_info.old}" />
+		<br/>
+		<input type="submit" value="送信する">
+	</form>
+</body>
+</html>
