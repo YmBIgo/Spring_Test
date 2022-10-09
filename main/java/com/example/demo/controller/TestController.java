@@ -232,7 +232,9 @@ public class TestController {
 	
 	// User Profile
 	@GetMapping("/users/{userId}")
-	public String user_profile_show(@PathVariable String userId,
+	public String user_profile_show(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+			   						@CookieValue(name = "email", required = false, defaultValue = "") String email,
+									@PathVariable String userId,
 									Model model) {
 		if (userId == "") {
 			return "users/profiles/user_profile_notfound";
@@ -251,6 +253,22 @@ public class TestController {
 		List<Map<String, Object>> followed_user  = jdbcTemplate.queryForList(followed_user_sql, userId);
 		int following_user_length = following_user.size();
 		int followed_user_length  = followed_user.size();
+		//
+		// 
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id != "") {
+			if (userId.equals(current_user_id)) {
+				model.addAttribute("follow_or_edit_button", 0);
+			} else {
+				String check_is_follow_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ? AND followed_user_id = ?;";
+				List<Map<String, Object>> is_follow_relationship = jdbcTemplate.queryForList(check_is_follow_sql, current_user_id, userId);
+				if (is_follow_relationship.size() == 0) {
+					model.addAttribute("follow_or_edit_button", 1);
+				} else {
+					model.addAttribute("follow_or_edit_button", 2);
+				}
+			}
+		}
 		//
 		model.addAttribute("user", user_list.get(0));
 		model.addAttribute("tweets", tweets_list);
@@ -331,9 +349,7 @@ public class TestController {
 		}
 		get_users_info_sql += get_user_info_middle_sql;
 		get_users_info_sql += ");";
-		System.out.println(get_users_info_sql);
 		List<Map<String, Object>> user_info = jdbcTemplate.queryForList(get_users_info_sql);
-		System.out.println(user_info);
 		//
 		model.addAttribute("followed_user", user_info);
 		return "/users/profiles/user_profile_follower";
