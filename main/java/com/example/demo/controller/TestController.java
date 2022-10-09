@@ -218,12 +218,17 @@ public class TestController {
 	public String tweet_create(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
 							   @CookieValue(name = "email", required = false, defaultValue = "") String email,
 							   @RequestParam String tweet,
+							   @RequestParam String csrf_key,
 							   Model model) {
 		String current_user_id = current_user_id(cookie_value, email);
 		if (current_user_id == "") {
-			String csrf_key = generate_csrf();
-			model.addAttribute("csrf_key", csrf_key);
+			String csrf_key_login = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key_login);
 			return "login";
+		}
+		boolean csrf_result = check_csrf(csrf_key);
+		if (csrf_result == false) {
+			return "index_redirect";
 		}
 		String create_tweet_sql = "INSERT INTO tweets(text, user_id, is_reply) VALUES(?, ?, 0)";
 		jdbcTemplate.update(create_tweet_sql, tweet, current_user_id);
@@ -416,6 +421,8 @@ public class TestController {
 		}
 		List<Map<String, Object>> user_list = current_user_object(cookie_value, email);
 		model.addAttribute("user_info", user_list.get(0));
+		String csrf_key = generate_csrf();
+		model.addAttribute("csrf_key", csrf_key);
 		return "users/profiles/user_profile_edit";
 	}
 	@PostMapping("/users/profile/update")
@@ -423,16 +430,21 @@ public class TestController {
 									  @CookieValue(name = "email", required = false, defaultValue = "") String email,
 									  @RequestParam String old,
 									  @RequestParam String name,
+									  @RequestParam String csrf_key,
 									  Model model) {
 		String current_user_id = current_user_id(cookie_value, email);
 		if (current_user_id.equals("")) {
-			String csrf_key = generate_csrf();
-			model.addAttribute("csrf_key", csrf_key);
+			String csrf_key_login = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key_login);
 			return "login";
+		}
+		model.addAttribute("userId", "http://localhost:8080/users/" + current_user_id);
+		boolean csrf_result = check_csrf(csrf_key);
+		if (csrf_result == false) {
+			return "users/profiles/user_profile_redirect";
 		}
 		String update_user_info_sql = "UPDATE users SET name = ?, old = ? WHERE id = ?";
 		jdbcTemplate.update(update_user_info_sql, name, old, current_user_id);
-		model.addAttribute("userId", "http://localhost:8080/users/" + current_user_id);
 		return "users/profiles/user_profile_redirect";
 	}
 	

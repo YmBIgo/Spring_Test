@@ -17,6 +17,7 @@
 		<br/>
 		<input type="text" name="old" th:value="${user_info.old}" />
 		<br/>
+		<input type="hidden" name="csrf_key" th:value="${csrf_key}">
 		<input type="submit" value="送信する">
 	</form>
 </body>
