@@ -39,7 +39,7 @@ public class TestController {
 						@CookieValue(name = "email", required = false, defaultValue = "") String email,
 						Model model) {
 		String current_user_id = current_user_id(cookie_value, email);
-		if (current_user_id == "") {
+		if (current_user_id.equals("")) {
 			String csrf_key = generate_csrf();
 			model.addAttribute("csrf_key", csrf_key);
 			return "login";
@@ -282,7 +282,7 @@ public class TestController {
 			   						@CookieValue(name = "email", required = false, defaultValue = "") String email,
 									Model model) {
 		String current_user_id = current_user_id(cookie_value, email);
-		if (current_user_id == "") {
+		if (current_user_id.equals("")) {
 			String csrf_key = generate_csrf();
 			model.addAttribute("csrf_key", csrf_key);
 			return "login";
@@ -297,7 +297,7 @@ public class TestController {
 	@GetMapping("/users/{userId}/followings")
 	public String user_profile_following(@PathVariable String userId,
 										 Model model) {
-		if (userId == "") {
+		if (userId.equals("")) {
 			return "/users/profiles/user_profile_notfound";
 		}
 		String find_user_sql = "SELECT id, name, email, old FROM users WHERE id = ?;";
@@ -323,7 +323,7 @@ public class TestController {
 	@GetMapping("/users/{userId}/followers")
 	public String user_profile_follower(@PathVariable String userId,
 										Model model) {
-		if (userId == "") {
+		if (userId.equals("")) {
 			return "/users/profiles/user_profile_notfound";
 		}
 		String find_user_sql = "SELECT id, name, email, old FROM users WHERE id = ?;";
@@ -353,6 +353,56 @@ public class TestController {
 		//
 		model.addAttribute("followed_user", user_info);
 		return "/users/profiles/user_profile_follower";
+	}
+	@GetMapping("/users/{userId}/follow")
+	public String user_profile_follow(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+			   						  @CookieValue(name = "email", required = false, defaultValue = "") String email, 
+			   						  @PathVariable String userId,
+			   						  Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id.equals("")) {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		model.addAttribute("userId", "http://localhost:8080/users/" + userId);
+		if (userId.equals(current_user_id)) {
+			return "users/profiles/user_profile_redirect";
+		}
+		//
+		String check_is_follow_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ? AND followed_user_id = ?;";
+		List<Map<String, Object>> is_follow_relationship = jdbcTemplate.queryForList(check_is_follow_sql, current_user_id, userId);
+		if (is_follow_relationship.size() != 0) {
+			return "users/profiles/user_profile_redirect";
+		}
+		String insert_user_relationship_sql = "INSERT INTO user_follow_relationships(following_user_id, followed_user_id) VALUES(?, ?)";
+		jdbcTemplate.update(insert_user_relationship_sql, current_user_id, userId);
+		return "users/profiles/user_profile_redirect";
+	}
+	@GetMapping("/users/{userId}/unfollow")
+	public String user_profile_unfollow(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+			   						  @CookieValue(name = "email", required = false, defaultValue = "") String email, 
+			   						  @PathVariable String userId,
+			   						  Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id.equals("")) {
+			String csrf_key = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key);
+			return "login";
+		}
+		model.addAttribute("userId", "http://localhost:8080/users/" + userId);
+		if (userId.equals(current_user_id)) {
+			return "users/profiles/user_profile_redirect";
+		}
+		//
+		String check_is_follow_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ? AND followed_user_id = ?;";
+		List<Map<String, Object>> is_follow_relationship = jdbcTemplate.queryForList(check_is_follow_sql, current_user_id, userId);
+		if (is_follow_relationship.size() == 0) {
+			return "users/profiles/user_profile_redirect";
+		}
+		String delete_user_relationship_sql = "DELETE FROM user_follow_relationships WHERE following_user_id = ? AND followed_user_id = ?;";
+		jdbcTemplate.update(delete_user_relationship_sql, current_user_id, userId);
+		return "users/profiles/user_profile_redirect";
 	}
 	
 	//
