@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+	<meta charset="UTF-8">
+	<title>Tweet Show Page</title>
+</head>
+<body>
+	<p>Back to <a href="/index">Top page</a></p>
+	<h1>Show Tweet</h1>
+	<hr/>
+	<h4><a th:href="'/users/' + ${user.id}" th:text="${user.name}"></a></h4>
+	<p th:text="${tweet.text}"></p>
+	<p>
+		<small th:text="${tweet.created_at}"></small>
+	</p>
+	<hr/>
+</body>
+</html>

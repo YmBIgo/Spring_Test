@@ -235,6 +235,28 @@ public class TestController {
 		return "index_redirect";
 	}
 	
+	@GetMapping("/tweets/{tweetId}")
+	public String tweet_show(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+							 @CookieValue(name = "email", required = false, defaultValue = "") String email,
+							 @PathVariable String tweetId,
+							 Model model) {
+		if (tweetId == "") {
+			return "/tweets/tweet_notfound";
+		}
+		String find_tweet_sql = "SELECT * FROM tweets WHERE id = ?";
+		List<Map<String, Object>> tweet_list = jdbcTemplate.queryForList(find_tweet_sql, tweetId);
+		if (tweet_list.size() == 0) {
+			return "/tweets/tweet_notfound";
+		}
+		Map<String, Object> tweet_map = tweet_list.get(0);
+		String tweet_user_sql = "SELECT email, id, name, old FROM users WHERE id = ?";
+		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(tweet_user_sql, tweet_map.get("user_id"));
+		//
+		model.addAttribute("tweet", tweet_map);
+		model.addAttribute("user", user_list.get(0));
+		return "tweets/tweet_show";
+	}
+	
 	// User Profile
 	@GetMapping("/users/{userId}")
 	public String user_profile_show(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
@@ -244,7 +266,7 @@ public class TestController {
 		if (userId == "") {
 			return "users/profiles/user_profile_notfound";
 		}
-		String find_user_sql = "SELECT * FROM users WHERE id = ?;";
+		String find_user_sql = "SELECT name, id, email, old FROM users WHERE id = ?;";
 		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(find_user_sql, userId);
 		if (user_list.size() == 0) {
 			return "/users/profiles/user_profile_notfound";

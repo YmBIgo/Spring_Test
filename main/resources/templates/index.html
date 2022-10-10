@@ -18,7 +18,8 @@
 	<div th:each="tweet : ${tweets}">
 		<div>
 			<h6 th:utext="'ツイートID : ' + ${tweet.id} + ' : <a href=\'/users/' + ${tweet.user_id} + '\'>' + ${tweet.user_name} + '</a>さんのツイート'"></h6>
-			<p th:text="${tweet.text}">
+			<p>
+				<a th:href="'/tweets/' + ${tweet.id}" th:text="${tweet.text}"></a>
 			</p>
 			<h6>
 				<small th:text="${tweet.created_at}"></small>

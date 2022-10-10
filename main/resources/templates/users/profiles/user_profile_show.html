@@ -26,7 +26,9 @@
 	<th:block th:if="${tweets.size() != 0}">
 		<div th:each="tweet : ${tweets}">
 			<h6 th:utext="'ツイートID : ' + ${tweet.id} + ' : <a href=\'/users/' + ${tweet.user_id} + '\'>' + ${user.name} + '</a>さんのツイート'"></h6>
-			<p th:text="${tweet.text}"></p>
+			<p>
+				<a th:text="${tweet.text}" th:href="'/tweets/' + ${tweet.id}"></a>
+			</p>
 			<h6>
 				<small th:text="${tweet.created_at}"></small>
 			</h6>
