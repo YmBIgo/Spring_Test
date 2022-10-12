@@ -13,6 +13,27 @@
 	<p>
 		<small th:text="${tweet.created_at}"></small>
 	</p>
+	<div:block th:if="${user_like == -1}">
+		<p>like <br/> <span th:text="${like_count}"></span></p>
+	</div:block>
+	<div:block th:if="${user_like == 0}">
+		<div>like
+			<form method="post" th:action="'/tweets/' + ${tweet.id} + '/like'">
+				<input type="hidden" name="tweet_id" th:value="${tweet.id}">
+				<input type="hidden" name="csrf_key" th:value="${csrf_key}">
+				<input type="submit" th:value="${like_count}" />
+			</form>
+		</div>
+	</div:block>
+	<div:block th:if="${user_like == 1}">
+		<div>like
+			<form method="post" th:action="'/tweets/' + ${tweet.id} + '/unlike'">
+				<input type="hidden" name="tweet_id" th:value="${tweet.id}">
+				<input type="hidden" name="csrf_key" th:value="${csrf_key}">
+				<input type="submit" th:value="${like_count}" />
+			</form>
+		</div>
+	</div:block>
 	<hr/>
 </body>
 </html>

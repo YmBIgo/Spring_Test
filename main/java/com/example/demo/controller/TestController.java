@@ -251,9 +251,25 @@ public class TestController {
 		Map<String, Object> tweet_map = tweet_list.get(0);
 		String tweet_user_sql = "SELECT email, id, name, old FROM users WHERE id = ?";
 		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(tweet_user_sql, tweet_map.get("user_id"));
+		// current_user
+		String current_user_id = current_user_id(cookie_value, email);
+		// likes
+		String find_like_sql = "SELECT * FROM likes WHERE tweet_id = ?;";
+		List<Map<String, Object>> like_list = jdbcTemplate.queryForList(find_like_sql, tweetId);
+		int like_count = like_list.size();
+		int user_like_flag = -1;
+		if (!current_user_id.equals("")) {
+			String find_user_like_sql = "SELECT * FROM likes WHERE user_id = ? AND tweet_id = ?;";
+			List<Map<String, Object>> user_like_list = jdbcTemplate.queryForList(find_user_like_sql, current_user_id, tweetId);
+			user_like_flag = user_like_list.size();
+		}
+		String csrf_key = generate_csrf();
 		//
 		model.addAttribute("tweet", tweet_map);
 		model.addAttribute("user", user_list.get(0));
+		model.addAttribute("like_count", like_count);
+		model.addAttribute("user_like", user_like_flag);
+		model.addAttribute("csrf_key", csrf_key);
 		return "tweets/tweet_show";
 	}
 	
@@ -468,6 +484,69 @@ public class TestController {
 		String update_user_info_sql = "UPDATE users SET name = ?, old = ? WHERE id = ?";
 		jdbcTemplate.update(update_user_info_sql, name, old, current_user_id);
 		return "users/profiles/user_profile_redirect";
+	}
+	
+	// Likes
+	@PostMapping("/tweets/{tweetId}/like")
+	public String tweet_like(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+							 @CookieValue(name = "email", required = false, defaultValue = "") String email,
+							 @RequestParam String tweet_id,
+							 @RequestParam String csrf_key,
+							 Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id.equals("")) {
+			String csrf_key_login = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key_login);
+			return "login";
+		}
+		String find_tweet_sql = "SELECT * FROM tweets WHERE id = ?;";
+		List<Map<String, Object>> tweet_list = jdbcTemplate.queryForList(find_tweet_sql, tweet_id);
+		if (tweet_list.size() == 0) {
+			String tweet_url = "/tweets/" + tweet_id;
+			model.addAttribute("tweetUrl", tweet_url);
+			return "tweets/tweet_redirect";
+		}
+		String find_like_sql = "SELECT * FROM likes WHERE tweet_id = ? AND user_id = ?;";
+		List<Map<String, Object>> like_list = jdbcTemplate.queryForList(find_like_sql, tweet_id, current_user_id);
+		if (like_list.size() != 0) {
+			String tweet_url = "/tweets/" + tweet_id;
+			model.addAttribute("tweetUrl", tweet_url);
+			return "tweets/tweet_redirect";
+		}
+		String insert_like_sql = "INSERT INTO likes (tweet_id, user_id) VALUES (?, ?)";
+		jdbcTemplate.update(insert_like_sql, tweet_id, current_user_id);
+		//
+		String tweet_url = "/tweets/" + tweet_id;
+		model.addAttribute("tweetUrl", tweet_url);
+		return "tweets/tweet_redirect";
+	}
+	
+	// unlike
+	@PostMapping("/tweets/{tweetId}/unlike")
+	public String tweet_unlike(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+			 				   @CookieValue(name = "email", required = false, defaultValue = "") String email,
+			 				   @RequestParam String tweet_id,
+			 				   @RequestParam String csrf_key,
+			 				   Model model) {
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id.equals("")) {
+			String csrf_key_login = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key_login);
+			return "login";
+		}
+		String find_like_sql = "SELECT * FROM likes WHERE tweet_id = ? AND user_id = ?;";
+		List<Map<String, Object>> like_list = jdbcTemplate.queryForList(find_like_sql, tweet_id, current_user_id);
+		if (like_list.size() == 0) {
+			String tweet_url = "/tweets/" + tweet_id;
+			model.addAttribute("tweetUrl", tweet_url);
+			return "tweets/tweet_redirect";
+		}
+		String delete_like_sql = "DELETE FROM likes WHERE tweet_id = ? AND user_id = ?;";
+		jdbcTemplate.update(delete_like_sql, tweet_id, current_user_id);
+		//
+		String tweet_url = "/tweets/" + tweet_id;
+		model.addAttribute("tweetUrl", tweet_url);
+		return "tweets/tweet_redirect";
 	}
 	
 	//
