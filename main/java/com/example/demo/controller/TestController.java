@@ -47,11 +47,22 @@ public class TestController {
 		List<Map<String, Object>> list = get_timeline_tweets();
 		List<Map<String, Object>> list_with_user_id = new ArrayList();
 		for (int i = 0; i < list.size(); i++) {
+			//
 			Map<String, Object> current_list = list.get(i);
 			String current_tweet_user_id_str = current_list.get("user_id").toString();
 			String get_user_name_sql = "SELECT name FROM users WHERE id = ?";
 			Map<String, Object> user_result = jdbcTemplate.queryForMap(get_user_name_sql, current_tweet_user_id_str);
 			current_list.put("user_name", user_result.get("name"));
+			//
+			String current_tweet_id_str = current_list.get("id").toString();
+			String current_tweet_like_sql = "SELECT * FROM likes WHERE user_id = ? AND tweet_id = ?;";
+			List<Map<String, Object>> like_result = jdbcTemplate.queryForList(current_tweet_like_sql, current_tweet_user_id_str, current_tweet_id_str);
+			current_list.put("like", like_result.size());
+			//
+			String current_tweet_is_liked_by_current_user_sql = "SELECT * FROM likes WHERE user_id = ? AND tweet_id = ?;";
+			List<Map<String, Object>> user_like_result = jdbcTemplate.queryForList(current_tweet_is_liked_by_current_user_sql, current_user_id, current_tweet_id_str);
+			current_list.put("is_user_like", user_like_result.size());
+			//
 			list_with_user_id.add(current_list);
 		}
 		model.addAttribute("tweets", list_with_user_id);
