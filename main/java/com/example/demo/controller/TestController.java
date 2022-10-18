@@ -55,8 +55,8 @@ public class TestController {
 			current_list.put("user_name", user_result.get("name"));
 			//
 			String current_tweet_id_str = current_list.get("id").toString();
-			String current_tweet_like_sql = "SELECT * FROM likes WHERE user_id = ? AND tweet_id = ?;";
-			List<Map<String, Object>> like_result = jdbcTemplate.queryForList(current_tweet_like_sql, current_tweet_user_id_str, current_tweet_id_str);
+			String current_tweet_like_sql = "SELECT * FROM likes WHERE tweet_id = ?;";
+			List<Map<String, Object>> like_result = jdbcTemplate.queryForList(current_tweet_like_sql, current_tweet_id_str);
 			current_list.put("like", like_result.size());
 			//
 			String current_tweet_is_liked_by_current_user_sql = "SELECT * FROM likes WHERE user_id = ? AND tweet_id = ?;";
@@ -301,6 +301,8 @@ public class TestController {
 		String find_tweets_sql = "SELECT * FROM tweets WHERE user_id = ? ORDER BY created_at DESC;";
 		List<Map<String, Object>> tweets_list = jdbcTemplate.queryForList(find_tweets_sql, userId);
 		//
+		String current_user_id = current_user_id(cookie_value, email);
+		//
 		String following_user_sql = "SELECT * FROM user_follow_relationships WHERE following_user_id = ?;";
 		String followed_user_sql  = "SELECT * FROM user_follow_relationships WHERE followed_user_id = ?;";
 		List<Map<String, Object>> following_user = jdbcTemplate.queryForList(following_user_sql, userId);
@@ -308,8 +310,21 @@ public class TestController {
 		int following_user_length = following_user.size();
 		int followed_user_length  = followed_user.size();
 		//
+		List<Map<String, Object>> updated_tweets_list = new ArrayList<>();
+		for (int i = 0; i < tweets_list.size(); i++ ) {
+			String tweet_id = tweets_list.get(i).get("id").toString();
+			Map<String, Object> current_tweet_content = tweets_list.get(i);
+			//
+			String current_tweet_like_sql = "SELECT * FROM likes WHERE tweet_id = ?;";
+			List<Map<String, Object>> current_tweet_like = jdbcTemplate.queryForList(current_tweet_like_sql, tweet_id);
+			current_tweet_content.put("likes", current_tweet_like.size());
+			// 
+			String current_tweet_liked_by_current_user_sql = "SELECT * FROM likes WHERE tweet_id = ? AND user_id = ?;";
+			List<Map<String, Object>> current_tweet_liked_by_current_user = jdbcTemplate.queryForList(current_tweet_liked_by_current_user_sql, tweet_id, current_user_id);
+			current_tweet_content.put("is_user_like", current_tweet_liked_by_current_user.size());
+			updated_tweets_list.add(current_tweet_content);
+		}
 		// 
-		String current_user_id = current_user_id(cookie_value, email);
 		if (current_user_id != "") {
 			if (userId.equals(current_user_id)) {
 				model.addAttribute("follow_or_edit_button", 0);
@@ -324,10 +339,14 @@ public class TestController {
 			}
 		}
 		//
+		String csrf_key = generate_csrf();
+		//
+		model.addAttribute("current_user_id", current_user_id);
 		model.addAttribute("user", user_list.get(0));
-		model.addAttribute("tweets", tweets_list);
+		model.addAttribute("tweets", updated_tweets_list);
 		model.addAttribute("following", following_user_length);
 		model.addAttribute("followed", followed_user_length);
+		model.addAttribute("csrf_key", csrf_key);
 		return "users/profiles/user_profile_show";
 	}
 	
