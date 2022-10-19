@@ -21,6 +21,7 @@ CREATE TABLE tweets
   text VARCHAR(256),
   user_id INTEGER,
   is_reply INTEGER DEFAULT 0,
+  is_retweet INTEGER DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY(id)
 );

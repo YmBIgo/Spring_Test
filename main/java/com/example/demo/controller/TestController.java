@@ -44,7 +44,7 @@ public class TestController {
 			model.addAttribute("csrf_key", csrf_key);
 			return "login";
 		}
-		List<Map<String, Object>> list = get_timeline_tweets();
+		List<Map<String, Object>> list = get_timeline_tweets(current_user_id);
 		List<Map<String, Object>> list_with_user_id = new ArrayList();
 		for (int i = 0; i < list.size(); i++) {
 			//
@@ -646,10 +646,23 @@ public class TestController {
 	
 	//
 	
-	private List<Map<String, Object>> get_timeline_tweets() {
+	private List<Map<String, Object>> get_timeline_tweets(String current_user_id) {
 		// TODO get tweet whose user is following
-		String get_timeline_tweets_sql = "SELECT * FROM tweets ORDER BY created_at DESC;";
-		List<Map<String, Object>> list = jdbcTemplate.queryForList(get_timeline_tweets_sql);
-		return list;
+		// String get_timeline_tweets_sql = "SELECT * FROM tweets ORDER BY created_at DESC;";
+		// List<Map<String, Object>> list = jdbcTemplate.queryForList(get_timeline_tweets_sql);
+		// return list;
+		String get_user_ids_sql = "SELECT followed_user_id FROM user_follow_relationships WHERE following_user_id = ?;";
+		List<Map<String, Object>> followed_user_ids = jdbcTemplate.queryForList(get_user_ids_sql, current_user_id);
+		String select_tweet_by_user_ids_in = "";
+		for (int i = 0; i < followed_user_ids.size(); i++) {
+			String selected_user_id = followed_user_ids.get(i).get("followed_user_id").toString();
+			select_tweet_by_user_ids_in += selected_user_id;
+			if (followed_user_ids.size() != 1 && followed_user_ids.size() != i + 1) {
+				select_tweet_by_user_ids_in += ", ";
+			}
+		}
+		String get_timeline_tweets_sql = "SELECT * FROM tweets WHERE id IN (" + current_user_id + ", " + select_tweet_by_user_ids_in + ");";
+		List<Map<String, Object>> tweet_list = jdbcTemplate.queryForList(get_timeline_tweets_sql);
+		return tweet_list;
 	}
 }
