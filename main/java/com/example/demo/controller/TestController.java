@@ -264,6 +264,8 @@ public class TestController {
 		List<Map<String, Object>> user_list = jdbcTemplate.queryForList(tweet_user_sql, tweet_map.get("user_id"));
 		// current_user
 		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id == "") current_user_id = "0";
+		model.addAttribute("current_user", Integer.parseInt(current_user_id));
 		// likes
 		String find_like_sql = "SELECT * FROM likes WHERE tweet_id = ?;";
 		List<Map<String, Object>> like_list = jdbcTemplate.queryForList(find_like_sql, tweetId);
@@ -274,14 +276,68 @@ public class TestController {
 			List<Map<String, Object>> user_like_list = jdbcTemplate.queryForList(find_user_like_sql, current_user_id, tweetId);
 			user_like_flag = user_like_list.size();
 		}
+		// reply
+		String reply_count_sql = "SELECT * FROM tweets WHERE is_reply = ?;";
+		List<Map<String, Object>> reply_tweet = jdbcTemplate.queryForList(reply_count_sql, tweetId);
+		// csrf
 		String csrf_key = generate_csrf();
 		//
 		model.addAttribute("tweet", tweet_map);
 		model.addAttribute("user", user_list.get(0));
 		model.addAttribute("like_count", like_count);
 		model.addAttribute("user_like", user_like_flag);
+		model.addAttribute("reply_count", reply_tweet.size());
+		model.addAttribute("reply", reply_tweet);
 		model.addAttribute("csrf_key", csrf_key);
 		return "tweets/tweet_show";
+	}
+	
+	// Tweet Reply
+	@PostMapping("/tweets/{tweetId}/reply")
+	public String tweet_reply(@CookieValue(name = "id", required = false, defaultValue = "") String cookie_value,
+			 				  @CookieValue(name = "email", required = false, defaultValue = "") String email,
+			 				  @RequestParam String csrf_key,
+			 				  @RequestParam String tweet_text,
+							  @PathVariable String tweetId,
+							  Model model) {
+		if (tweetId == "") {
+			return "/tweets/tweet_notfound";
+		}
+		if (tweet_text == "") {
+			String tweetUrl = "http://localhost:8080/tweets/" + tweetId;
+			model.addAttribute("tweetUrl", tweetUrl);
+			return "tweets/tweet_redirect";
+		}
+		String find_tweet_sql = "SELECT * FROM tweets WHERE id = ?";
+		List<Map<String, Object>> tweet_list = jdbcTemplate.queryForList(find_tweet_sql, tweetId);
+		if (tweet_list.size() == 0) {
+			return "/tweets/tweet_notfound";
+		}
+		String current_user_id = current_user_id(cookie_value, email);
+		if (current_user_id == "") {
+			String csrf_key_login = generate_csrf();
+			model.addAttribute("csrf_key", csrf_key_login);
+			return "login";
+		}
+		boolean csrf_result = check_csrf(csrf_key);
+		if (csrf_result == false) {
+			return "index_redirect";
+		}
+		// main process
+		String generate_reply_sql = "INSERT INTO tweets(user_id, text, is_reply) VALUES (?, ?, ?);"; 
+		jdbcTemplate.update(generate_reply_sql, current_user_id, tweet_text, tweetId);
+		String tweetUrl = "http://localhost:8080/tweets/" + tweetId;
+		model.addAttribute("tweetUrl", tweetUrl);
+		return "tweets/tweet_redirect";
+	}
+	
+	// Tweet Retweet
+	@PostMapping("/tweets/{tweetId}/retweet")
+	public String tweet_retweet(@PathVariable String tweetId,
+								Model model) {
+		String tweetUrl = "http://localhost:8080/tweets/" + tweetId;
+		model.addAttribute("tweetUrl", tweetUrl);
+		return "tweets/tweet_redirect";
 	}
 	
 	// User Profile

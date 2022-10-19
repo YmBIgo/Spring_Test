@@ -35,5 +35,24 @@
 		</div>
 	</div:block>
 	<hr/>
+	<p>
+		Reply <span th:text="${reply_count}"></span>
+		<div th:if="${current_user != 0}">
+			<div>
+			<form method="post" th:action="'/tweets/' + ${tweet.id} + '/reply'">
+				<input type="hidden" name="csrf_key" th:value="${csrf_key}" />
+				<textarea name="tweet_text"></textarea>
+				<br/>
+				<input type="submit" value="送信する"/>
+			</form>
+			</div>
+		</div>
+		<div th:each="reply : ${reply}">
+			<div>
+				<p th:text="${reply.text} + ' @ ' + ${reply.created_at}"></p>
+			</div>
+		</div>
+	</p>
+	<hr/>
 </body>
 </html>
